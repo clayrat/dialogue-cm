@@ -48,8 +48,9 @@ data dpmove (A : 𝒰 ℓ)
 data domove (A : 𝒰 ℓ)
             (R : rule-set A ℓa ℓatk ℓd)
             : dstate A R → dstate A R → 𝒰 (ℓ ⊔ ℓa ⊔ ℓatk ⊔ ℓd) where
-  DOAtk : ∀ {pA pA' pC oA oC ϕ adm} {atk : R .attack ϕ adm}
-        → domove A R (pA ∪∷ ϕ ∷ pA' ,         pC ,                   oA , oC)
+  DOAtk : ∀ {pp pA pA' pC oA oC ϕ adm} {atk : R .attack ϕ adm}
+        → pp ＝ pA ∪∷ ϕ ∷ pA'
+        → domove A R (pp            ,         pC ,                   oA , oC)
                      (pA ∪∷     pA' , C atk ∷ pC , from-maybe adm ∪∷ oA , oC)
   DODef : ∀ {pA pC oA oC ϕ adm} {atk : R .attack ϕ adm} {ψ}
         → ⌞ R .defense atk ψ ⌟
@@ -95,7 +96,7 @@ dwin-Dprv {A} {R} (DWS (DPAtk {pA} {pC = C ak ∷ pC} {oA} {oC} {atk} ϕ∈ aj) 
                           (ih (subst (λ q → domove A R (q ∪∷ pA , C ak ∷ pC , oA , C atk ∷ oC)
                                             (pA , C atk′ ∷ C ak ∷ pC , from-maybe adm′ ∪∷ oA , C atk ∷ oC))
                                      (from-maybe-= x∈ ⁻¹)
-                                     (DOAtk {pA = []} {pA' = pA})))
+                                     (DOAtk {pA = []} {pA' = pA} refl)))
          )
          aj)
 dwin-Dprv         (DWS (DPDef {pA} {pC} {oA} {oC} pj rd)                   ih) =
@@ -103,7 +104,7 @@ dwin-Dprv         (DWS (DPDef {pA} {pC} {oA} {oC} pj rd)                   ih) =
   Def rd pj
     λ {adm = adm′} {atk = atk′} →
         dwin-Dprv {S = pA , C atk′ ∷ pC , from-maybe adm′ ∪∷ oA , oC}
-                  (ih (DOAtk {pA = []} {pA' = pA}))
+                  (ih (DOAtk {pA = []} {pA' = pA} refl))
 
 dcompleteness : {A : 𝒰 ℓ}
                 {R : rule-set A ℓa ℓatk ℓd}
