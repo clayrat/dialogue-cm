@@ -10,6 +10,8 @@ open import Data.Maybe.Correspondences.Unary.Any
 
 open import LFSet
 open import LFSet.Membership
+
+open import Game
 open import EGame
 
 -- from https://www.ps.uni-saarland.de/extras/fol-completeness-ext/website/Undecidability.FOLC.Sorensen.html
@@ -84,12 +86,12 @@ esoundness : ∀ {A : 𝒰 ℓ}
 esoundness {A} {R} (Def {φ = φ′} ef hj dp) =
   Jₚ (λ q _ → evalid q)
      (hj , λ where
-               S (C atk) (OP {adm} _ .atk) →
+               S (C atk) (OP {adm} _ .atk e) →
                    DPrv-ewin
-                       (subst (λ q → DPrv _ R q λ ψ → ⌞ R .defense atk ψ ⌟)
-                              (∪∷-id-r (from-maybe adm))
+                      (subst (λ q → DPrv _ R q λ ψ → ⌞ R .defense atk ψ ⌟)
+                              (∪∷-id-r (from-maybe adm) ∙ e ⁻¹)
                               dp)
-                        λ ψ → id)
+                      λ ψ → id)
      ef
 
 ewin-DPrv : ∀ {A : 𝒰 ℓ}
@@ -115,7 +117,7 @@ ecompleteness {A} {R} {φ} (hj , hw) =
        ewin-DPrv (hw (from-maybe adm ∪∷ []) (C atk)
                      (subst (λ q → opening A R φ q (C atk))
                             (∪∷-id-r (from-maybe adm) ⁻¹)
-                            (OP hj atk)))
+                            (OP hj atk refl)))
 
 -- TODO equiv
 
@@ -196,19 +198,11 @@ DPrv-echo {A} {R} {Q} wfq hdes {φ}  =
              (λ {χ} d → Def {φ = χ}
                             d (λ _ → hereₛ refl)
                             λ {adm = adm′} {atk = atk′} → ih χ (hdf χ d) (hereₛ refl))
-             -- TODO abstract out
-             (Maybe.elim (λ z → Any (λ a → Q a q) z
-                              → Any (justified {R = R} (from-maybe z ∪∷ S)) z)
-                         false!
-                         (λ z _ → here λ _ → hereₛ refl)
-                         adm had)
-             (Maybe.elim (λ z → Any (λ a → Q a q) z
-                              → Any (λ w → ∀ adm′ (atk′ : R .attack w adm′)
-                                         → DPrv A R (from-maybe adm′ ∪∷ from-maybe z ∪∷ S)
-                                                    (λ ζ → ⌞ R .defense atk′ ζ ⌟)) z)
-                         false!
-                         (λ z az → here λ adm′ atk′ → ih z (unhere az) (hereₛ refl))
-                         adm had))
+             (any-map∈ (λ {x = z} z∈ _ _ → ∈ₛ-∪∷←l (∈-maybe z∈))
+                       had)
+             (any-map∈ (λ {x = z} z∈ az adm′ atk′ →
+                ih z az (∈ₛ-∪∷←l (∈-maybe z∈))) had)
+             )
     φ
 
 DPrv-ax : ∀ {A : 𝒰 ℓ}
@@ -229,9 +223,9 @@ DPrv-just : ∀ {A : 𝒰 ℓ}
               {T′ : A → 𝒰 ℓ″}
           → (∀ ψ → T ψ → φ ＝ ψ)
           → DPrv A R S T
-          → (∀ {P} → S ⊆ P -> justified {R = R} P φ → DPrv A R P T′)
+          → (∀ {P} → S ⊆ P → justified {R = R} P φ → DPrv A R P T′)
           → DPrv A R S T′
-DPrv-just {R} {S} {φ} te (Def {φ = φ′} ef hj dp)    jd =
+DPrv-just {R} {S} {φ} te (Def {φ = φ′} ef hj dp)                     jd =
   jd id (Jₚ (λ q eq → justified {R = R} S q → justified {R = R} S φ)
             id
             (te φ′ ef) hj)
